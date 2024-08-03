@@ -82,6 +82,15 @@ export default {
         await ctx.reply("History cleared! Previous length: " + oldLength);
       });
 
+      // This runs fast enough to not need to be queued
+      bot.command("forceReset", async (ctx) => {
+        // Force delete the DO
+        const doId = env.CHAT_DO.idFromName(ctx.chat.id.toString());
+        // Pass it in the context
+        await env.CHAT_DO.get(doId).deleteAll();
+        await ctx.reply("Forcing Delete All!");
+      });
+
       bot.command("setLanguages", async (ctx) => {
         const languages = ctx.match
         if (!languages) {
@@ -386,5 +395,9 @@ export class ChatDurableObject extends DurableObject<Env> {
 
   async getFromLanguage(): Promise<string> {
     return await this.ctx.storage.get<string>("from_language") || "English";
+  }
+
+  async deleteAll(): Promise<void> {
+    await this.ctx.storage.deleteAll();
   }
 }
