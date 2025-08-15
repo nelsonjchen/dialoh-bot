@@ -23,6 +23,7 @@ export interface Env {
   OPENAI_BASE_URL: string;
   OPENAI_API_KEY: string;
   WHITELISTED_USERS: string;
+  WHITELISTED_GROUPS: string;
   CHAT_DO: DurableObjectNamespace<ChatDurableObject>;
   QUEUE: Queue<QueueMessage>;
 }
@@ -128,6 +129,7 @@ export default {
   ): Promise<void> {
 
     const whitelisted_users = env.WHITELISTED_USERS.split(",");
+    const whitelisted_groups = env.WHITELISTED_GROUPS.split(",");
 
     const replicate = new Replicate(
       {
@@ -309,9 +311,13 @@ export default {
       );
       // check if the whitelist user is in the list
       if (messageFilter(context)) {
-        if (!whitelisted_users.includes(context.from.id.toString())) {
-          console.log("User not whitelisted, ignoring", {
+        const isUserWhitelisted = whitelisted_users.includes(context.from.id.toString());
+        const isGroupWhitelisted = context.chat.type !== 'private' ? whitelisted_groups.includes(context.chat.id.toString()) : false;
+
+        if (!isUserWhitelisted && !isGroupWhitelisted) {
+          console.log("User and group not whitelisted, ignoring", {
             from: context.message.from,
+            chat: context.chat,
           });
           return;
         }
